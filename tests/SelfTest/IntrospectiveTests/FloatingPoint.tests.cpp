@@ -131,7 +131,3 @@ TEST_CASE( "count_equidistant_floats",
                                  decltype( count_floats_with_scaled_ulp(
                                      0.f, 1.f ) )>::value );
 }
-
-#if defined( __GNUC__ ) || defined( __clang__ )
-#    pragma GCC diagnostic pop
-#endif
