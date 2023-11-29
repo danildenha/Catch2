@@ -64,3 +64,20 @@ TEST_CASE( "ExtendedMult 64x64", "[Integer][approvals]" ) {
                                     0x2559'92d3'8220'8bbe,
                                     0xdf44'2d22'ce48'59b9 );
 }
+
+TEST_CASE( "SizedUnsignedType helpers", "[integer][approvals]" ) {
+    using Catch::Detail::SizedUnsignedType_t;
+    using Catch::Detail::DoubleWidthUnsignedType_t;
+
+    STATIC_REQUIRE( sizeof( SizedUnsignedType_t<1> ) == 1 );
+    STATIC_REQUIRE( sizeof( SizedUnsignedType_t<2> ) == 2 );
+    STATIC_REQUIRE( sizeof( SizedUnsignedType_t<4> ) == 4 );
+    STATIC_REQUIRE( sizeof( SizedUnsignedType_t<8> ) == 8 );
+
+    STATIC_REQUIRE( sizeof( DoubleWidthUnsignedType_t<std::uint8_t> ) == 2 );
+    STATIC_REQUIRE( std::is_unsigned<DoubleWidthUnsignedType_t<std::uint8_t>>::value );
+    STATIC_REQUIRE( sizeof( DoubleWidthUnsignedType_t<std::uint16_t> ) == 4 );
+    STATIC_REQUIRE( std::is_unsigned<DoubleWidthUnsignedType_t<std::uint16_t>>::value );
+    STATIC_REQUIRE( sizeof( DoubleWidthUnsignedType_t<std::uint32_t> ) == 8 );
+    STATIC_REQUIRE( std::is_unsigned<DoubleWidthUnsignedType_t<std::uint32_t>>::value );
+}

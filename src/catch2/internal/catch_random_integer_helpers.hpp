@@ -9,6 +9,7 @@
 #ifndef CATCH_RANDOM_INTEGER_HELPERS_HPP_INCLUDED
 #define CATCH_RANDOM_INTEGER_HELPERS_HPP_INCLUDED
 
+#include <cstddef>
 #include <cstdint>
 
 namespace Catch {
@@ -75,6 +76,29 @@ namespace Catch {
                 c << 32 | d  // lower 64 bits
             };
         }
+
+        template <std::size_t>
+        struct SizedUnsignedType;
+#define SizedUnsignedTypeHelper( TYPE )        \
+    template <>                                \
+    struct SizedUnsignedType<sizeof( TYPE )> { \
+        using type = TYPE;                     \
+    }
+
+        SizedUnsignedTypeHelper( std::uint8_t );
+        SizedUnsignedTypeHelper( std::uint16_t );
+        SizedUnsignedTypeHelper( std::uint32_t );
+        SizedUnsignedTypeHelper( std::uint64_t );
+#undef SizedUnsignedTypeHelper
+
+        template <std::size_t sz>
+        using SizedUnsignedType_t = typename SizedUnsignedType<sz>::type;
+
+        template <typename T>
+        using DoubleWidthUnsignedType_t = SizedUnsignedType_t<2 * sizeof(T)>;
+
+
+
     } // namespace Detail
 } // namespace Catch
 
