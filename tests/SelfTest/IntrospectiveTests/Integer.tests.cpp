@@ -23,11 +23,8 @@ namespace {
 } // namespace
 
 TEST_CASE( "ExtendedMult 64x64", "[Integer][approvals]" ) {
-    using Catch::Detail::ExtendedMult;
-    using Catch::Detail::ExtendedMultResult;
-
     // a x 0 == 0
-    CommutativeMultCheck<uint64_t>( 0x12345678, 0, 0, 0 );
+    CommutativeMultCheck<uint64_t>( 0x1234'5678'9ABC'DEFF, 0, 0, 0 );
 
     // bit carried from low half to upper half
     CommutativeMultCheck<uint64_t>( uint64_t( 1 ) << 63, 2, 1, 0 );
@@ -80,4 +77,45 @@ TEST_CASE( "SizedUnsignedType helpers", "[integer][approvals]" ) {
     STATIC_REQUIRE( std::is_unsigned<DoubleWidthUnsignedType_t<std::uint16_t>>::value );
     STATIC_REQUIRE( sizeof( DoubleWidthUnsignedType_t<std::uint32_t> ) == 8 );
     STATIC_REQUIRE( std::is_unsigned<DoubleWidthUnsignedType_t<std::uint32_t>>::value );
+}
+
+TEST_CASE( "ExtendedMult 32x32", "[integer][approvals]" ) {
+    // a x 0 == 0
+    CommutativeMultCheck<uint32_t>( 0x1234'5678, 0, 0, 0 );
+
+    // bit carried from low half to upper half
+    CommutativeMultCheck<uint32_t>( uint32_t(1) << 31, 2, 1, 0 );
+
+    // bits in upper half on one side, bits in lower half on other side
+    CommutativeMultCheck<uint32_t>( 0xdcdc'0000, 0x0000'aabb, 0x0000'934b, 0x6cb4'0000 );
+
+    // Some input numbers without interesting patterns
+    CommutativeMultCheck<uint32_t>(
+        0xaaaa'aaaa, 0xbbbb'bbbb, 0x7d27'd27c, 0x2d82'd82e );
+
+    CommutativeMultCheck<uint32_t>(
+        0x7d27'd27c, 0x2d82'd82e, 0x163f'f7e8, 0xc5b8'7248 );
+
+    CommutativeMultCheck<uint32_t>(
+        0xdead'beef, 0xfeed'feed, 0xddbf'6809, 0x6f8d'e543 );
+
+    CommutativeMultCheck<uint32_t>(
+        0xddbf'6809, 0x6f8d'e543, 0x60a0'e71e, 0x751d'475b );
+}
+
+TEST_CASE( "ExtendedMult 8x8", "[integer][approvals]" ) {
+    // a x 0 == 0
+    CommutativeMultCheck<uint8_t>( 0xcd, 0, 0, 0 );
+
+    // bit carried from low half to upper half
+    CommutativeMultCheck<uint8_t>( uint8_t( 1 ) << 7, 2, 1, 0 );
+
+    // bits in upper half on one side, bits in lower half on other side
+    CommutativeMultCheck<uint8_t>( 0x80, 0x03, 0x01, 0x80 );
+
+    // Some input numbers without interesting patterns
+    CommutativeMultCheck<uint8_t>( 0xaa, 0xbb, 0x7c, 0x2e );
+    CommutativeMultCheck<uint8_t>( 0x7c, 0x2e, 0x16, 0x48 );
+    CommutativeMultCheck<uint8_t>( 0xdc, 0xcd, 0xb0, 0x2c );
+    CommutativeMultCheck<uint8_t>( 0xb0, 0x2c, 0x1e, 0x40 );
 }

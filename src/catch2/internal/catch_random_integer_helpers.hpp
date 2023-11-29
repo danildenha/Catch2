@@ -9,11 +9,34 @@
 #ifndef CATCH_RANDOM_INTEGER_HELPERS_HPP_INCLUDED
 #define CATCH_RANDOM_INTEGER_HELPERS_HPP_INCLUDED
 
+#include <climits>
 #include <cstddef>
 #include <cstdint>
+#include <type_traits>
 
 namespace Catch {
     namespace Detail {
+
+        template <std::size_t>
+        struct SizedUnsignedType;
+#define SizedUnsignedTypeHelper( TYPE )        \
+    template <>                                \
+    struct SizedUnsignedType<sizeof( TYPE )> { \
+        using type = TYPE;                     \
+    }
+
+        SizedUnsignedTypeHelper( std::uint8_t );
+        SizedUnsignedTypeHelper( std::uint16_t );
+        SizedUnsignedTypeHelper( std::uint32_t );
+        SizedUnsignedTypeHelper( std::uint64_t );
+#undef SizedUnsignedTypeHelper
+
+        template <std::size_t sz>
+        using SizedUnsignedType_t = typename SizedUnsignedType<sz>::type;
+
+        template <typename T>
+        using DoubleWidthUnsignedType_t = SizedUnsignedType_t<2 * sizeof( T )>;
+
         template <typename T>
         struct ExtendedMultResult {
             T upper;
@@ -77,27 +100,20 @@ namespace Catch {
             };
         }
 
-        template <std::size_t>
-        struct SizedUnsignedType;
-#define SizedUnsignedTypeHelper( TYPE )        \
-    template <>                                \
-    struct SizedUnsignedType<sizeof( TYPE )> { \
-        using type = TYPE;                     \
-    }
+        template <typename UInt>
+        constexpr ExtendedMultResult<UInt> ExtendedMult( UInt lhs, UInt rhs ) {
+            static_assert( std::is_unsigned<UInt>::value,
+                           "ExtendedMult can only handle unsigned integers" );
+            static_assert( sizeof( UInt ) < sizeof( std::uint64_t ),
+                           "Generic extendedMult can only handle types smaller "
+                           "than uint64_t" );
+            using WideType = DoubleWidthUnsignedType_t<UInt>;
 
-        SizedUnsignedTypeHelper( std::uint8_t );
-        SizedUnsignedTypeHelper( std::uint16_t );
-        SizedUnsignedTypeHelper( std::uint32_t );
-        SizedUnsignedTypeHelper( std::uint64_t );
-#undef SizedUnsignedTypeHelper
-
-        template <std::size_t sz>
-        using SizedUnsignedType_t = typename SizedUnsignedType<sz>::type;
-
-        template <typename T>
-        using DoubleWidthUnsignedType_t = SizedUnsignedType_t<2 * sizeof(T)>;
-
-
+            auto result = WideType( lhs ) * WideType( rhs );
+            return {
+                static_cast<UInt>( result >> ( CHAR_BIT * sizeof( UInt ) ) ),
+                static_cast<UInt>( result & UInt( -1 ) ) };
+        }
 
     } // namespace Detail
 } // namespace Catch
