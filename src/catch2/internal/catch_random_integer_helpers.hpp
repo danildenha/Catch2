@@ -115,6 +115,51 @@ namespace Catch {
                 static_cast<UInt>( result & UInt( -1 ) ) };
         }
 
+
+        template <typename TargetType,
+                  typename Generator>
+            std::enable_if_t<sizeof(typename Generator::result_type) >= sizeof(TargetType),
+            TargetType> fillBitsFrom(Generator& gen) {
+            using gresult_type = typename Generator::result_type;
+            static_assert( std::is_unsigned<TargetType>::value, "Only unsigned integers are supported" );
+            static_assert( Generator::min() == 0 &&
+                           Generator::max() == static_cast<gresult_type>( -1 ),
+                           "Generator must be able to output all numbers in its result type (effectively it must be a random bit generator)" );
+
+            // We want to return the top bits from a generator, as they are
+            // usually considered higher quality.
+            constexpr auto generated_bits = sizeof( gresult_type ) * CHAR_BIT;
+            constexpr auto return_bits = sizeof( TargetType ) * CHAR_BIT;
+
+            return static_cast<TargetType>( gen() >>
+                                            ( generated_bits - return_bits) );
+        }
+
+        template <typename TargetType,
+                  typename Generator>
+            std::enable_if_t<sizeof(typename Generator::result_type) < sizeof(TargetType),
+            TargetType> fillBitsFrom(Generator& gen) {
+            using gresult_type = typename Generator::result_type;
+            static_assert( std::is_unsigned<TargetType>::value,
+                           "Only unsigned integers are supported" );
+            static_assert( Generator::min() == 0 &&
+                           Generator::max() == static_cast<gresult_type>( -1 ),
+                           "Generator must be able to output all numbers in its result type (effectively it must be a random bit generator)" );
+
+            constexpr auto generated_bits = sizeof( gresult_type ) * CHAR_BIT;
+            constexpr auto return_bits = sizeof( TargetType ) * CHAR_BIT;
+            std::size_t filled_bits = 0;
+            TargetType ret = 0;
+            do {
+                ret <<= generated_bits;
+                ret |= gen();
+                filled_bits += generated_bits;
+            } while ( filled_bits < return_bits );
+
+            return ret;
+        }
+
+
     } // namespace Detail
 } // namespace Catch
 
