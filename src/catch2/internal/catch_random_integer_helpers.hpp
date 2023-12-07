@@ -159,7 +159,43 @@ namespace Catch {
             return ret;
         }
 
+        /*
+         * Transposes numbers into unsigned type while keeping their ordering
+         *
+         * This means that signed types are changed so that the ordering is
+         * [INT_MIN, ..., -1, 0, ..., INT_MAX], rather than order we would
+         * get by simple casting ([0, ..., INT_MAX, INT_MIN, ..., -1])
+         */
+        template <typename OriginalType, typename UnsignedType>
+        std::enable_if_t<std::is_signed<OriginalType>::value, UnsignedType>
+        transposeToNaturalOrder( UnsignedType in ) {
+            static_assert(
+                sizeof( OriginalType ) == sizeof( UnsignedType ),
+                "reordering requires the same sized types on both sides" );
+            static_assert( std::is_unsigned<UnsignedType>::value,
+                           "Input type must be unsigned" );
+            // Assuming 2s complement (standardized in current C++), the
+            // positive and negative numbers are already internally ordered,
+            // and their difference is in the top bit. Swapping it orders
+            // them the desired way.
+            constexpr auto highest_bit =
+                UnsignedType( 1 ) << ( sizeof( UnsignedType ) * CHAR_BIT - 1 );
+            return static_cast<UnsignedType>( in ^ highest_bit );
+        }
 
+
+
+        template <typename OriginalType,
+                  typename UnsignedType>
+        std::enable_if_t<std::is_unsigned<OriginalType>::value, UnsignedType>
+            transposeToNaturalOrder(UnsignedType in) {
+            static_assert(
+                sizeof( OriginalType ) == sizeof( UnsignedType ),
+                "reordering requires the same sized types on both sides" );
+            static_assert( std::is_unsigned<UnsignedType>::value, "Input type must be unsigned" );
+            // No reordering is needed for unsigned -> unsigned
+            return in;
+        }
     } // namespace Detail
 } // namespace Catch
 

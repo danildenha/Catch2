@@ -119,3 +119,32 @@ TEST_CASE( "ExtendedMult 8x8", "[integer][approvals]" ) {
     CommutativeMultCheck<uint8_t>( 0xdc, 0xcd, 0xb0, 0x2c );
     CommutativeMultCheck<uint8_t>( 0xb0, 0x2c, 0x1e, 0x40 );
 }
+
+
+TEST_CASE( "negative and positive signed integers keep their order after transposeToNaturalOrder",
+                    "[integer][approvals]") {
+    using Catch::Detail::transposeToNaturalOrder;
+    int32_t negative( -1 );
+    int32_t positive( 1 );
+    uint32_t adjusted_negative =
+        transposeToNaturalOrder<int32_t>( static_cast<uint32_t>( negative ) );
+    uint32_t adjusted_positive =
+        transposeToNaturalOrder<int32_t>( static_cast<uint32_t>( positive ) );
+    REQUIRE( adjusted_negative < adjusted_positive );
+    REQUIRE( adjusted_positive - adjusted_negative == 2 );
+
+    // Conversion has to be reversible
+    REQUIRE( negative == static_cast<int32_t>( transposeToNaturalOrder<int32_t>(
+                             adjusted_negative ) ) );
+    REQUIRE( positive == static_cast<int32_t>( transposeToNaturalOrder<int32_t>(
+                             adjusted_positive ) ) );
+}
+
+TEST_CASE( "unsigned integers are unchanged by transposeToNaturalOrder",
+           "[integer][approvals]") {
+    using Catch::Detail::transposeToNaturalOrder;
+    uint32_t max = std::numeric_limits<uint32_t>::max();
+    uint32_t zero = 0;
+    REQUIRE( max == transposeToNaturalOrder<uint32_t>( max ) );
+    REQUIRE( zero == transposeToNaturalOrder<uint32_t>( zero ) );
+}
